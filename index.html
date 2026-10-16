@@ -1,29 +1,5 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-html, body {
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    overflow: hidden;
-}
-
-body {
-    color: white;
-    font-family:
-        "Avenir Next",
-        "Avenir",
-        "Segoe UI",
-        Arial,
-        sans-serif;
-}
-
 .container {
-    width: 150px;
+    width: 200px;
     height: 50px;
 
     display: flex;
@@ -36,8 +12,8 @@ body {
 .source {
     font-size: 9px;
     color: rgba(255,255,255,0.75);
-    line-height: 1;
     white-space: nowrap;
+    margin-right: 8px;
 }
 
 .info {
@@ -48,99 +24,13 @@ body {
 }
 
 .topline {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 1.1;
-    margin-bottom: 2px;
 }
 
 .time {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     line-height: 1;
 }
-</style>
-
-</head>
-<body>
-
-<div class="container">
-
-    <div class="source">
-        Open-Meteo
-    </div>
-
-    <div class="info">
-        <div id="topline" class="topline">
-            🌤️ Milano
-        </div>
-
-        <div id="time" class="time">
-            14:15
-        </div>
-    </div>
-
-</div>
-
-<script>
-
-function weatherIcon(code) {
-    if (code === 0) return "☀️";
-    if (code <= 3) return "🌤️";
-    if (code <= 48) return "☁️";
-    if (code <= 67) return "🌦️";
-    if (code <= 77) return "❄️";
-    if (code <= 82) return "🌧️";
-    return "⛈️";
-}
-
-let weather = "🌤️";
-
-async function loadMilanWeather() {
-    try {
-        const response = await fetch(
-            "https://api.open-meteo.com/v1/forecast?latitude=45.4642&longitude=9.1900&current=weather_code"
-        );
-
-        const data = await response.json();
-
-        weather = weatherIcon(data.current.weather_code);
-
-    } catch (error) {
-        weather = "🌤️";
-    }
-}
-
-function updateDisplay() {
-
-    const now = new Date();
-
-    const time = now.toLocaleTimeString("it-IT", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-
-    document.getElementById("topline").textContent =
-        `${weather} Milano`;
-
-    document.getElementById("time").textContent =
-        time;
-}
-
-async function initialize() {
-
-    await loadMilanWeather();
-
-    updateDisplay();
-
-    setInterval(updateDisplay, 1000);
-
-    setInterval(loadMilanWeather, 1800000);
-}
-
-initialize();
-
-</script>
-
-</body>
-</html>
