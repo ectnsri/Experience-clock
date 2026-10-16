@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-
 html, body {
     margin: 0;
     padding: 0;
@@ -30,50 +29,90 @@ body {
         sans-serif;
 }
 
-.container {
-    text-align: right;
-}
-
-.date {
+.info {
     font-size: 12px;
     font-weight: 500;
-    line-height: 1.2;
+    white-space: nowrap;
+    text-align: right;
 }
-
-.time {
-    font-size: 16px;
-    font-weight: 600;
-    line-height: 1.1;
-}
-
 </style>
 </head>
 
 <body>
 
-<div class="container">
-    <div id="date" class="date"></div>
-    <div id="time" class="time"></div>
+<div id="info" class="info">
+    Loading...
 </div>
 
 <script>
 
-function updateClock() {
+function weatherIcon(code) {
+    if (code === 0) return "☀️";
+    if (code <= 3) return "⛅";
+    if (code < 70) return "🌧️";
+    if (code < 90) return "❄️";
+    return "⛈️";
+}
+
+function updateInfo(city, weather) {
 
     const now = new Date();
 
-    document.getElementById("date").innerHTML =
-        "Milano, " + now.toLocaleDateString("it-IT");
+    const date =
+        now.toLocaleDateString("it-IT");
 
-    document.getElementById("time").innerHTML =
+    const time =
         now.toLocaleTimeString("it-IT", {
             hour: "2-digit",
             minute: "2-digit"
         });
+
+    document.getElementById("info").innerHTML =
+        `${city} | ${date} | ${time} | ${weather}`;
 }
 
-updateClock();
-setInterval(updateClock, 1000);
+let city =
+    Intl.DateTimeFormat()
+        .resolvedOptions()
+        .timeZone
+        .split("/")
+        .pop()
+        .replace(/_/g, " ");
+
+let weather = "";
+
+if (navigator.geolocation) {
+
+    navigator.geolocation.getCurrentPosition(function(pos) {
+
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+
+        fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code`
+        )
+        .then(r => r.json())
+        .then(data => {
+
+            weather =
+                weatherIcon(data.current.weather_code);
+
+            updateInfo(city, weather);
+
+            setInterval(() => {
+                updateInfo(city, weather);
+            }, 1000);
+        });
+
+    });
+
+} else {
+
+    updateInfo(city, "");
+    setInterval(() => {
+        updateInfo(city, "");
+    }, 1000);
+}
 
 </script>
 
