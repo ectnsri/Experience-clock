@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<style>
+body{
+    margin:0;
+    background:transparent;
+    color:white;
+    font-family:"Avenir Next", Arial, sans-serif;
+    text-align:right;
+}
+
+#date{
+    font-size:20px;
+    font-weight:500;
+}
+
+#time{
+    font-size:38px;
+    font-weight:600;
+}
+</style>
+</head>
+<body>
+
+<div id="date"></div>
+<div id="time"></div>
+
+<script>
+let city = "Milano"; // fallback
+
+function updateClock() {
+    const now = new Date();
+
+    document.getElementById("date").innerHTML =
+        city + ", " + now.toLocaleDateString("it-IT");
+
+    document.getElementById("time").innerHTML =
+        now.toLocaleTimeString("it-IT", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+}
+
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        async function(pos) {
+            try {
+                const url =
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                city =
+                    data.address.city ||
+                    data.address.town ||
+                    data.address.village ||
+                    "Milano";
+
+                updateClock();
+            } catch (e) {
+                updateClock();
+            }
+        },
+        function() {
+            updateClock(); // usa Milano
+        }
+    );
+} else {
+    updateClock(); // usa Milano
+}
+
+setInterval(updateClock, 1000);
+</script>
+
+</body>
+</html>
