@@ -29,19 +29,30 @@ body {
         sans-serif;
 }
 
-.info {
+.container {
+    text-align: right;
+}
+
+.topline {
     font-size: 12px;
     font-weight: 500;
+    line-height: 1.2;
     white-space: nowrap;
-    text-align: right;
+}
+
+.time {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.1;
 }
 </style>
 </head>
 
 <body>
 
-<div id="info" class="info">
-    🌤️ Milano | --/--/---- | --:--
+<div class="container">
+    <div id="topline" class="topline"></div>
+    <div id="time" class="time"></div>
 </div>
 
 <script>
@@ -53,13 +64,13 @@ function weatherIcon(code) {
     if (code <= 67) return "🌦️";
     if (code <= 77) return "❄️";
     if (code <= 82) return "🌧️";
-    if (code <= 99) return "⛈️";
-    return "🌤️";
+    return "⛈️";
 }
 
 let weather = "🌤️";
 
 async function loadMilanWeather() {
+
     try {
 
         const response = await fetch(
@@ -70,7 +81,8 @@ async function loadMilanWeather() {
 
         weather = weatherIcon(data.current.weather_code);
 
-    } catch (e) {
+    } catch {
+
         weather = "🌤️";
     }
 }
@@ -86,8 +98,11 @@ function updateDisplay() {
         minute: "2-digit"
     });
 
-    document.getElementById("info").innerHTML =
-        `${weather} Milano | ${date} | ${time}`;
+    document.getElementById("topline").textContent =
+        `${weather} Milano ${date}`;
+
+    document.getElementById("time").textContent =
+        time;
 }
 
 loadMilanWeather().then(() => {
@@ -96,9 +111,7 @@ loadMilanWeather().then(() => {
 
     setInterval(updateDisplay, 1000);
 
-    setInterval(async () => {
-        await loadMilanWeather();
-    }, 1800000);
+    setInterval(loadMilanWeather, 1800000);
 
 });
 
