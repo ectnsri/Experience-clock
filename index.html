@@ -24,35 +24,33 @@ body {
 
 .container {
     width: 500px;
-    height: 24px;
+    height: 28px;
 
     display: flex;
     align-items: center;
-
-    gap: 16px;
+    gap: 18px;
 
     white-space: nowrap;
     overflow: hidden;
-
-    box-sizing: border-box;
 }
 
 .source {
-    font-size: 9px;
+    font-size: 10px;
     color: rgba(255,255,255,0.75);
 }
 
 .item {
-    font-size: 11px;
+    font-size: 13px;
 }
 
-.time {
-    font-size: 11px;
+.time,
+.temp {
+    font-size: 14px;
     font-weight: 600;
 }
 
 .air {
-    font-size: 11px;
+    font-size: 13px;
 }
 </style>
 </head>
@@ -63,42 +61,42 @@ body {
 
     <span class="source">Open-Meteo</span>
 
-    <span class="item">Milano</span>
+    <span id="city" class="item">🌤️ Milano</span>
 
-    <span id="date" class="item">
-        16/10/2026
-    </span>
+    <span id="date" class="item">--/--/----</span>
 
-    <span id="time" class="time">
-        14:15
-    </span>
+    <span id="time" class="time">--:--</span>
 
-    <span id="temp" class="item">
-        --°C
-    </span>
+    <span id="temp" class="temp">--°C</span>
 
-    <span id="wind" class="item">
-        -- km/h
-    </span>
+    <span id="wind" class="item">-- km/h --</span>
 
-    <span id="air" class="air">
-        🟢 Qualità aria
-    </span>
+    <span id="air" class="air">⚪ Qualità aria</span>
 
 </div>
 
 <script>
 
-function windDirection(degrees) {
+function weatherIcon(code) {
 
-    const directions = [
+    if (code === 0) return "☀️";
+    if (code <= 3) return "🌤️";
+    if (code <= 48) return "☁️";
+    if (code <= 67) return "🌦️";
+    if (code <= 77) return "❄️";
+    if (code <= 82) return "🌧️";
+
+    return "⛈️";
+}
+
+function windDirection(deg) {
+
+    const dirs = [
         "N", "NE", "E", "SE",
         "S", "SO", "O", "NO"
     ];
 
-    return directions[
-        Math.round(degrees / 45) % 8
-    ];
+    return dirs[Math.round(deg / 45) % 8];
 }
 
 function airQualityDisplay(aqi) {
@@ -114,43 +112,44 @@ function airQualityDisplay(aqi) {
     return "🔴 Qualità aria";
 }
 
-async function loadWeatherData() {
+async function loadData() {
 
     try {
 
-        const response = await fetch(
-            "https://api.open-meteo.com/v1/forecast?latitude=45.4642&longitude=9.1900&current=temperature_2m,wind_speed_10m,wind_direction_10m"
+        const weatherResponse = await fetch(
+            "https://api.open-meteo.com/v1/forecast?latitude=45.4642&longitude=9.1900&current=weather_code,temperature_2m,wind_speed_10m,wind_direction_10m"
         );
 
-        const data = await response.json();
+        const weatherData = await weatherResponse.json();
+
+        document.getElementById("city").textContent =
+            weatherIcon(weatherData.current.weather_code) +
+            " Milano";
 
         document.getElementById("temp").textContent =
-            Math.round(data.current.temperature_2m) + "°C";
+            Math.round(weatherData.current.temperature_2m) + "°C";
 
         document.getElementById("wind").textContent =
-            Math.round(data.current.wind_speed_10m) +
+            Math.round(weatherData.current.wind_speed_10m) +
             " km/h " +
-            windDirection(data.current.wind_direction_10m);
+            windDirection(weatherData.current.wind_direction_10m);
 
     } catch (error) {
 
         console.error(error);
     }
-}
-
-async function loadAirQuality() {
 
     try {
 
-        const response = await fetch(
+        const airResponse = await fetch(
             "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=45.4642&longitude=9.1900&current=european_aqi"
         );
 
-        const data = await response.json();
+        const airData = await airResponse.json();
 
         document.getElementById("air").textContent =
             airQualityDisplay(
-                data.current.european_aqi
+                airData.current.european_aqi
             );
 
     } catch (error) {
@@ -175,18 +174,13 @@ function updateClock() {
 
 async function initialize() {
 
-    await Promise.all([
-        loadWeatherData(),
-        loadAirQuality()
-    ]);
+    await loadData();
 
     updateClock();
 
     setInterval(updateClock, 1000);
 
-    setInterval(loadWeatherData, 1800000);
-
-    setInterval(loadAirQuality, 1800000);
+    setInterval(loadData, 1800000);
 }
 
 initialize();
