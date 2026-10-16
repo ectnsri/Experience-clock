@@ -37,7 +37,6 @@ body {
 }
 </style>
 </head>
-
 <body>
 
 <div id="info" class="info">
@@ -45,6 +44,10 @@ body {
 </div>
 
 <script>
+
+const FALLBACK_CITY = "Milano";
+const FALLBACK_LAT = 45.4642;
+const FALLBACK_LON = 9.1900;
 
 function weatherIcon(code) {
     if (code === 0) return "☀️";
@@ -54,64 +57,98 @@ function weatherIcon(code) {
     return "⛈️";
 }
 
-function updateInfo(city, weather) {
+function updateDisplay(city, weather) {
 
     const now = new Date();
 
-    const date =
-        now.toLocaleDateString("it-IT");
+    const date = now.toLocaleDateString("it-IT");
 
-    const time =
-        now.toLocaleTimeString("it-IT", {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+    const time = now.toLocaleTimeString("it-IT", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 
     document.getElementById("info").innerHTML =
         `${city} | ${date} | ${time} | ${weather}`;
 }
 
-let city =
-    Intl.DateTimeFormat()
-        .resolvedOptions()
-        .timeZone
-        .split("/")
-        .pop()
-        .replace(/_/g, " ");
+async function loadWeather(lat, lon, city) {
 
-let weather = "";
+    try {
+
+        const response = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code`
+        );
+
+        const data = await response.json();
+
+        const weather = weatherIcon(data.current.weather_code);
+
+        updateDisplay(city, weather);
+
+        setInterval(() => {
+            updateDisplay(city, weather);
+        }, 1000);
+
+    } catch {
+
+        updateDisplay(city, "");
+
+        setInterval(() => {
+            updateDisplay(city, "");
+        }, 1000);
+    }
+}
+
+function loadMilan() {
+    loadWeather(
+        FALLBACK_LAT,
+        FALLBACK_LON,
+        FALLBACK_CITY
+    );
+}
 
 if (navigator.geolocation) {
 
-    navigator.geolocation.getCurrentPosition(function(pos) {
+    navigator.geolocation.getCurrentPosition(
 
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
+        async function(position) {
 
-        fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code`
-        )
-        .then(r => r.json())
-        .then(data => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
 
-            weather =
-                weatherIcon(data.current.weather_code);
+            try {
 
-            updateInfo(city, weather);
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`
+                );
 
-            setInterval(() => {
-                updateInfo(city, weather);
-            }, 1000);
-        });
+                const data = await response.json();
 
-    });
+                const city =
+                    data.address.city ||
+                    data.address.town ||
+                    data.address.village ||
+                    FALLBACK_CITY;
+
+                loadWeather(lat, lon, city);
+
+            } catch {
+
+                loadWeather(lat, lon, FALLBACK_CITY);
+            }
+        },
+
+        function() {
+
+            // User denied location
+            loadMilan();
+        }
+    );
 
 } else {
 
-    updateInfo(city, "");
-    setInterval(() => {
-        updateInfo(city, "");
-    }, 1000);
+    loadMilan();
 }
 
 </script>
