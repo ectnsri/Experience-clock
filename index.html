@@ -8,19 +8,12 @@
 html, body {
     margin: 0;
     padding: 0;
-    width: 100%;
-    height: 100%;
-    background: black;
+    background: transparent;
+    overflow: hidden;
 }
 
 body {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    padding-right: 10px;
-
     color: white;
-
     font-family:
         "Avenir Next",
         "Avenir",
@@ -30,29 +23,44 @@ body {
 }
 
 .container {
+    width: 300px;
+    height: 50px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-end;
+
+    box-sizing: border-box;
+
     text-align: right;
+    white-space: nowrap;
 }
 
 .topline {
     font-size: 12px;
     font-weight: 500;
-    line-height: 1.2;
-    white-space: nowrap;
+    line-height: 1.1;
+    margin-bottom: 2px;
 }
 
 .time {
     font-size: 16px;
     font-weight: 600;
-    line-height: 1.1;
+    line-height: 1;
 }
 </style>
-</head>
 
+</head>
 <body>
 
 <div class="container">
-    <div id="topline" class="topline"></div>
-    <div id="time" class="time"></div>
+    <div id="topline" class="topline">
+        🌤️ Milano 16/10/2026
+    </div>
+    <div id="time" class="time">
+        14:15
+    </div>
 </div>
 
 <script>
@@ -81,7 +89,7 @@ async function loadMilanWeather() {
 
         weather = weatherIcon(data.current.weather_code);
 
-    } catch {
+    } catch (error) {
 
         weather = "🌤️";
     }
@@ -105,15 +113,18 @@ function updateDisplay() {
         time;
 }
 
-loadMilanWeather().then(() => {
+async function initialize() {
+
+    await loadMilanWeather();
 
     updateDisplay();
 
     setInterval(updateDisplay, 1000);
 
     setInterval(loadMilanWeather, 1800000);
+}
 
-});
+initialize();
 
 </script>
 
